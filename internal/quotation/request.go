@@ -3,6 +3,7 @@ package quotation
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/partner"
 )
@@ -61,8 +62,39 @@ type partnerRequest struct {
 	Request
 }
 
+const (
+	SourcePartner = "partner"
+	SourceCache   = "cache"
+)
+
+// Quote is a partner quote as presented to the broker. The premium is always the partner's own:
+// either fetched now (source "partner") or fetched earlier for this same broker and risk (source
+// "cache"). QuoteID and FetchedAt trace a cached quote back to the consultation that produced it.
+type Quote struct {
+	partner.Quote
+	Source     string    `json:"source"`
+	FetchedAt  time.Time `json:"fetched_at"`
+	AgeSeconds int64     `json:"age_seconds"`
+}
+
+const (
+	ReasonCircuitOpen = "circuit_open"
+	ReasonTimeout     = "timeout"
+	ReasonError       = "error"
+)
+
+// Unavailable names a partner that is missing from a degraded response, and why.
+type Unavailable struct {
+	Partner string `json:"partner"`
+	Reason  string `json:"reason"`
+}
+
+// Response is complete when every partner is in Quotes. When at least one is missing, Degraded is
+// true and Unavailable lists which ones; the quotes that did arrive are still sorted by premium.
 type Response struct {
-	TenantID  string          `json:"tenant_id"`
-	Quotes    []partner.Quote `json:"quotes"`
-	ElapsedMs int64           `json:"elapsed_ms"`
+	TenantID    string        `json:"tenant_id"`
+	Quotes      []Quote       `json:"quotes"`
+	Degraded    bool          `json:"degraded"`
+	Unavailable []Unavailable `json:"unavailable,omitempty"`
+	ElapsedMs   int64         `json:"elapsed_ms"`
 }

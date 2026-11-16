@@ -1,0 +1,114 @@
+# Mede as evidencias do desafio num runner do GitHub, porque a maquina de desenvolvimento nao tem
+# Docker. Dispara em push para verify/antes (codigo original) e verify/depois (entrega) e grava os
+# artefatos em docs/evidencias/<fase>/ na propria branch. Nao faz parte do enunciado.
+name: evidencias
+
+on:
+  push:
+    branches: ["verify/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BUILDKIT_PROGRESS: plain
+      COMPOSE_ANSI: never
+      COMPOSE_PROGRESS: plain
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Fase e pasta de saida
+        run: |
+          FASE="${GITHUB_REF_NAME#verify/}"
+          echo "FASE=$FASE" >> "$GITHUB_ENV"
+          echo "OUT=docs/evidencias/$FASE" >> "$GITHUB_ENV"
+          mkdir -p "docs/evidencias/$FASE"
+          sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin fonts-dejavu-core > /dev/null
+
+      - name: Ambiente
+        run: |
+          {
+            echo "commit medido: $(git rev-parse HEAD) (branch $GITHUB_REF_NAME)"
+            echo "data (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "runner: $(uname -srm), $(nproc) vCPU, $(free -g | awk '/Mem:/ {print $2}') GiB"
+            echo "$(go version)"
+            echo "$(docker --version)"
+            echo "$(docker compose version)"
+            echo "$(make --version | head -1)"
+          } | tee "$OUT/ambiente.txt"
+
+      - name: make test
+        run: |
+          set -o pipefail
+          make test 2>&1 | tee "$OUT/make-test.txt"
+
+      - name: go test -race (fora do Makefile, so para a concorrencia do breaker)
+        run: |
+          set -o pipefail
+          go test -race -count=1 ./... 2>&1 | tee "$OUT/go-test-race.txt"
+
+      - name: make smoke
+        run: |
+          set -o pipefail
+          make smoke 2>&1 | tee "$OUT/make-smoke.txt"
+
+      - name: make down && make reproduce (carga padrao)
+        run: |
+          set -o pipefail
+          echo "SINCE=$(date +%s)" >> "$GITHUB_ENV"
+          (make down && make reproduce) 2>&1 | tee "$OUT/make-reproduce.txt"
+
+      - name: Graficos e traces da carga padrao
+        run: |
+          sleep 30
+          if [ "$FASE" = "antes" ]; then
+            node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" p95-post-quotes p95-por-parceira-http traces-antes metric-names
+          else
+            node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" p95-post-quotes cache-hit-rate
+          fi
+
+      - name: Variacao 1, cache frio em serie (breaker da partner-flaky)
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          echo "SINCE_V=$(date +%s)" >> "$GITHUB_ENV"
+          make load ARGS="-baseline 0 -requests 120 -concurrency 1 -distinct 120 -duration 10m" 2>&1 | tee "$OUT/variacao-1-cache-frio-em-serie.txt"
+
+      - name: Variacao 2, cache frio com 50 em voo (timeout e breaker da partner-degrading)
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          make load ARGS="-tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m" 2>&1 | tee "$OUT/variacao-2-cache-frio-50-em-voo.txt"
+
+      - name: Graficos e traces das variacoes
+        if: env.FASE != 'antes'
+        run: |
+          sleep 30
+          mkdir -p "$OUT/variacoes"
+          node .github/scripts/collect-evidence.mjs "$OUT/variacoes" "$SINCE_V" breaker-estado breaker-transicoes latencia-por-parceira p95-post-quotes
+          node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" traces-depois metric-names
+          docker compose logs quotation-api --no-log-prefix 2>&1 | tail -n 200 > "$OUT/log-quotation-api.txt"
+
+      - name: SVG para PNG
+        run: |
+          find "$OUT" -name '*.svg' | while read -r svg; do
+            rsvg-convert -b white -o "${svg%.svg}.png" "$svg" && rm "$svg"
+          done
+          ls -la "$OUT" "$OUT"/variacoes 2>/dev/null || true
+
+      - name: Grava as evidencias na branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/evidencias
+          git commit -m "evidencias: fase $FASE medida no runner" || echo "nada para gravar"
+          git push
