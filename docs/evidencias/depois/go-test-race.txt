@@ -1,0 +1,8 @@
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/cmd/loadgen	2.766s
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/cmd/partner-mock	1.141s
+?   	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/cmd/quotation-api	[no test files]
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/breaker	1.011s
+?   	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/cache	[no test files]
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/partner	1.300s
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/platform	1.015s
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/internal/quotation	1.140s

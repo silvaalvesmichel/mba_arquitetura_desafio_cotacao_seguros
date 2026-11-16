@@ -1,0 +1,31 @@
+Chaves de atributo vistas em 529 traces de POST /quotes (Jaeger /api/traces):
+client.address
+error
+error.type
+http.request.body.size
+http.request.method
+http.response.body.size
+http.response.status_code
+internal.span.format
+network.peer.address
+network.peer.port
+network.protocol.version
+otel.scope.name
+otel.scope.version
+otel.status_code
+otel.status_description
+partner
+quotation.breaker.short_circuited
+quotation.cache.hits
+quotation.cache.result
+quotation.degraded
+server.address
+server.port
+span.kind
+tenant_id
+url.full
+url.path
+url.scheme
+user_agent.original
+
+Chaves com document|cpf|plate|placa|quote_id: nenhuma

@@ -1,0 +1,40 @@
+Nomes de metrica no Prometheus (/api/v1/label/__name__/values), sem as do proprio Collector:
+go_config_gogc_percent
+go_goroutine_count
+go_memory_allocated_bytes_total
+go_memory_allocations_total
+go_memory_gc_goal_bytes
+go_memory_used_bytes
+go_processor_limit
+http_client_request_body_size_bytes_bucket
+http_client_request_body_size_bytes_count
+http_client_request_body_size_bytes_sum
+http_client_request_duration_seconds_bucket
+http_client_request_duration_seconds_count
+http_client_request_duration_seconds_sum
+http_server_request_body_size_bytes_bucket
+http_server_request_body_size_bytes_count
+http_server_request_body_size_bytes_sum
+http_server_request_duration_seconds_bucket
+http_server_request_duration_seconds_count
+http_server_request_duration_seconds_sum
+http_server_response_body_size_bytes_bucket
+http_server_response_body_size_bytes_count
+http_server_response_body_size_bytes_sum
+quotation_breaker_state
+quotation_breaker_transitions_total
+quotation_cache_requests_total
+quotation_partner_duration_seconds_bucket
+quotation_partner_duration_seconds_count
+quotation_partner_duration_seconds_sum
+quotation_responses_total
+target_info
+
+Rotulos das metricas quotation_*:
+quotation_breaker_state: exported_job, instance, job, partner, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version
+quotation_breaker_transitions_total: exported_job, from, instance, job, partner, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version, to
+quotation_cache_requests_total: exported_job, instance, job, partner, result, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version, tenant_id
+quotation_partner_duration_seconds_bucket: exported_job, instance, job, le, outcome, partner, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version
+quotation_partner_duration_seconds_count: exported_job, instance, job, outcome, partner, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version
+quotation_partner_duration_seconds_sum: exported_job, instance, job, outcome, partner, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version
+quotation_responses_total: exported_job, instance, job, outcome, service_name, telemetry_sdk_language, telemetry_sdk_name, telemetry_sdk_version, tenant_id

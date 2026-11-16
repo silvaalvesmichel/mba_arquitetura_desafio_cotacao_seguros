@@ -1,0 +1,7 @@
+commit medido: 02fb84a8949ec6d9d21a4e137f1a87355747a2ee (branch verify/depois)
+data (UTC): 2026-11-16T23:06:31Z
+runner: Linux 7.0.0-1016-aws x86_64, 4 vCPU, 15 GiB
+go version go1.25.0 linux/amd64
+Docker version 29.4.2, build 055a478
+Docker Compose version v5.1.3
+GNU Make 4.4.1

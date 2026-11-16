@@ -1,0 +1,7 @@
+Requisicao curto-circuitada: nao existe span HTTP de saida para a parceira com o circuito aberto.
+traceID b09d7d225f8db91714f4c9568a2bf792 | 5 spans
+  +     0.0 ms    1503.4 ms  POST /quotes  http.response.status_code=200 quotation.cache.hits=0 quotation.degraded=true server.address=quotation-api span.kind=server
+  +     0.0 ms    1503.2 ms  partner.quote  partner=partner-slow quotation.cache.result=miss span.kind=internal tenant_id=corretora-b
+  +     0.1 ms    1503.1 ms  HTTP POST  http.response.status_code=200 server.address=partner-slow span.kind=client url.full=http://partner-slow:8080/quotes
+  +  1503.3 ms       0.0 ms  partner.quote  partner=partner-flaky quotation.breaker.short_circuited=true quotation.cache.result=miss span.kind=internal tenant_id=corretora-b event=partner call short-circuited: circuit open
+  +  1503.3 ms       0.0 ms  partner.quote  partner=partner-degrading quotation.breaker.short_circuited=true quotation.cache.result=miss span.kind=internal tenant_id=corretora-b event=partner call short-circuited: circuit open

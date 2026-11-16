@@ -1,0 +1,6 @@
+Cotacao servida de cache: nenhum span HTTP de saida para as parceiras.
+traceID a969e38a250ff8060288075a2572b310 | 4 spans
+  +     0.0 ms       0.3 ms  POST /quotes  http.response.status_code=200 quotation.cache.hits=3 quotation.degraded=false server.address=quotation-api span.kind=server
+  +     0.0 ms       0.1 ms  partner.quote  partner=partner-slow quotation.cache.result=hit span.kind=internal tenant_id=corretora-a
+  +     0.2 ms       0.1 ms  partner.quote  partner=partner-flaky quotation.cache.result=hit span.kind=internal tenant_id=corretora-a
+  +     0.2 ms       0.0 ms  partner.quote  partner=partner-degrading quotation.cache.result=hit span.kind=internal tenant_id=corretora-a
