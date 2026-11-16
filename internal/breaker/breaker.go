@@ -71,10 +71,20 @@ func New(settings Settings) *Breaker {
 	return &Breaker{settings: settings}
 }
 
+// State reports the current state. Once the open period has elapsed the circuit is half-open, waiting
+// for its probe, whether or not a request has arrived yet: reading the state is what a gauge does, and
+// it must not show "open" for a partner that would already be tested by the next call.
 func (b *Breaker) State() State {
 	b.mu.Lock()
-	defer b.mu.Unlock()
-	return b.state
+	from := b.state
+	if b.state == Open && b.settings.Now().Sub(b.openedAt) >= b.settings.OpenFor {
+		b.move(HalfOpen)
+	}
+	to := b.state
+	b.mu.Unlock()
+
+	b.notify(from, to)
+	return to
 }
 
 // Allow reports whether the call may reach the partner. When it may, the caller must report the

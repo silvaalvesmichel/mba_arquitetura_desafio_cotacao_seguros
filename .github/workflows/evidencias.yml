@@ -104,6 +104,18 @@ jobs:
           set -o pipefail
           go run ./cmd/loadgen -tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m 2>&1 | tee "$OUT/variacao-3-cache-morno-50-em-voo.txt"
 
+      # Um risco novo logo depois da carga, com os circuitos ainda abertos, e de novo 30 s depois: a
+      # segunda chamada e a sonda que fecha o circuito. Dados ficticios.
+      - name: Resposta degradada e sonda que fecha o circuito
+        if: env.FASE != 'antes'
+        run: |
+          cotar() {
+            curl -s -m 10 localhost:8080/quotes -H 'Content-Type: application/json' -H 'X-Tenant-Id: corretora-b'               -d "{\"driver\":{\"document\":\"00000000191\",\"birth_year\":1985},\"vehicle\":{\"plate\":\"$1\",\"model\":\"Onix 1.0\",\"year\":2020,\"value_cents\":7500000},\"coverage\":\"comprehensive\"}"
+          }
+          cotar SND0001 | tee "$OUT/resposta-degradada.json"; echo
+          sleep 30
+          cotar SND0002 | tee "$OUT/resposta-apos-sonda.json"; echo
+
       - name: Graficos das variacoes 2 e 3 e traces
         if: env.FASE != 'antes'
         run: |

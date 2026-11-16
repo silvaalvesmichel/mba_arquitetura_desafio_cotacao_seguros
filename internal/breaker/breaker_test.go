@@ -118,3 +118,28 @@ func TestBreakerIgnoresResultsFromBeforeTheLastTransition(t *testing.T) {
 		t.Fatal("an ignored probe did not free the half_open slot")
 	}
 }
+
+func TestBreakerReportsHalfOpenAsSoonAsTheOpenPeriodEnds(t *testing.T) {
+	var transitions []string
+	clock := &fakeClock{now: time.Unix(0, 0)}
+	b := newTestBreaker(clock, &transitions)
+
+	for i := 0; i < 5; i++ {
+		call(t, b, Failure)
+	}
+	if b.State() != Open {
+		t.Fatalf("state %s right after opening, expected open", b.State())
+	}
+
+	// No request arrives: the state read by the gauge still moves on its own.
+	clock.advance(10 * time.Second)
+	if b.State() != HalfOpen {
+		t.Fatalf("state %s after the open period with no traffic, expected half_open", b.State())
+	}
+
+	call(t, b, Success)
+	expected := []string{"closed->open", "open->half_open", "half_open->closed"}
+	if fmt.Sprint(transitions) != fmt.Sprint(expected) {
+		t.Fatalf("transitions %v, expected %v", transitions, expected)
+	}
+}
