@@ -1,4 +1,4 @@
-Chaves de atributo vistas em 529 traces de POST /quotes (Jaeger /api/traces):
+Chaves de atributo vistas em 732 traces de POST /quotes (Jaeger /api/traces):
 client.address
 error
 error.type

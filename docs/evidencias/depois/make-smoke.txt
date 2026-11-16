@@ -31,4 +31,4 @@ go test ./cmd/partner-mock -run Feasibility -v
     feasibility_test.go:178: burst of 9 consecutive failures at sequences 49-57, inside a single `make reproduce`
 --- PASS: TestFeasibilityBurstIsWhereTheDocsSayItIs (0.00s)
 PASS
-ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/cmd/partner-mock	0.005s
+ok  	github.com/GuilhermeOliveira591/mba_arquitetura_desafio_cotacao_seguros/cmd/partner-mock	(cached)
