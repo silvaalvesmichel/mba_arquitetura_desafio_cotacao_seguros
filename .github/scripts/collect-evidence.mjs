@@ -35,7 +35,7 @@ const charts = {
   },
   "cache-hit-rate": {
     title: "Hit rate acumulado do cache (hit / total)",
-    query: 'sum(quotation_cache_requests_total{result="hit"}) / sum(quotation_cache_requests_total)',
+    query: '(sum(quotation_cache_requests_total{result="hit"}) or vector(0)) / sum(quotation_cache_requests_total)',
     yMax: 1,
     unit: "",
   },

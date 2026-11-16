@@ -30,6 +30,7 @@ jobs:
           FASE="${GITHUB_REF_NAME#verify/}"
           echo "FASE=$FASE" >> "$GITHUB_ENV"
           echo "OUT=docs/evidencias/$FASE" >> "$GITHUB_ENV"
+          rm -rf "docs/evidencias/$FASE"
           mkdir -p "docs/evidencias/$FASE"
           sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin fonts-dejavu-core > /dev/null
 
@@ -79,21 +80,35 @@ jobs:
         if: env.FASE != 'antes'
         run: |
           set -o pipefail
-          echo "SINCE_V=$(date +%s)" >> "$GITHUB_ENV"
+          echo "SINCE_V1=$(date +%s)" >> "$GITHUB_ENV"
           make load ARGS="-baseline 0 -requests 120 -concurrency 1 -distinct 120 -duration 10m" 2>&1 | tee "$OUT/variacao-1-cache-frio-em-serie.txt"
+
+      - name: Graficos da variacao 1
+        if: env.FASE != 'antes'
+        run: |
+          sleep 30
+          node .github/scripts/collect-evidence.mjs "$OUT/variacao-1" "$SINCE_V1" breaker-estado breaker-transicoes
 
       - name: Variacao 2, cache frio com 50 em voo (timeout e breaker da partner-degrading)
         if: env.FASE != 'antes'
         run: |
           set -o pipefail
+          echo "SINCE_V2=$(date +%s)" >> "$GITHUB_ENV"
           make load ARGS="-tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m" 2>&1 | tee "$OUT/variacao-2-cache-frio-50-em-voo.txt"
 
-      - name: Graficos e traces das variacoes
+      # Roda do host (go run), como o roteiro permite, para nao recriar a API: o make load recria os
+      # conteineres da API e das parceiras a cada execucao e zeraria os breakers e os contadores.
+      - name: Variacao 3, a mesma carga da variacao 2 de novo, com o cache morno
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          go run ./cmd/loadgen -tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m 2>&1 | tee "$OUT/variacao-3-cache-morno-50-em-voo.txt"
+
+      - name: Graficos das variacoes 2 e 3 e traces
         if: env.FASE != 'antes'
         run: |
           sleep 30
-          mkdir -p "$OUT/variacoes"
-          node .github/scripts/collect-evidence.mjs "$OUT/variacoes" "$SINCE_V" breaker-estado breaker-transicoes latencia-por-parceira p95-post-quotes
+          node .github/scripts/collect-evidence.mjs "$OUT/variacao-2-e-3" "$SINCE_V2" breaker-estado breaker-transicoes latencia-por-parceira p95-post-quotes
           node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" traces-depois metric-names
           docker compose logs quotation-api --no-log-prefix 2>&1 | tail -n 200 > "$OUT/log-quotation-api.txt"
 
@@ -102,7 +117,7 @@ jobs:
           find "$OUT" -name '*.svg' | while read -r svg; do
             rsvg-convert -b white -o "${svg%.svg}.png" "$svg" && rm "$svg"
           done
-          ls -la "$OUT" "$OUT"/variacoes 2>/dev/null || true
+          ls -laR "$OUT"
 
       - name: Grava as evidencias na branch
         if: always()
