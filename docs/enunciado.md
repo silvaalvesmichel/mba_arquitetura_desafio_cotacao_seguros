@@ -148,7 +148,7 @@ Um comando: sobe o ambiente, espera ficar saudável e dispara a carga (10 requis
 baseline, depois 200 com 50 em voo). O relatório sai no terminal. **Guarde essa saída**, porque ela
 deixa de existir no instante em que você tocar no código, e é a metade "antes" da sua evidência.
 
-O roteiro **[`docs/roteiro-cenario-de-falha.md`](docs/roteiro-cenario-de-falha.md)** ensina a ler esse
+O roteiro **[`docs/roteiro-cenario-de-falha.md`](roteiro-cenario-de-falha.md)** ensina a ler esse
 relatório e a achar no Jaeger a cascata em série que o explica: três chamadas coladas uma na outra, e um
 trace com erro em que o span da terceira parceira nem chega a existir. Leia antes de escrever código.
 
@@ -199,7 +199,7 @@ obrigatórios; o segundo, a agregação em série, é o único opcional, e está
 
 ### 5. O resto, na ordem
 
-1. Leia [`docs/guia-sad.md`](docs/guia-sad.md) e escreva as **seções 1 a 4 do SAD**. É o documento que
+1. Leia [`docs/guia-sad.md`](guia-sad.md) e escreva as **seções 1 a 4 do SAD**. É o documento que
    fixa TTL, limiares e escopo do breaker.
 2. Implemente os **três mecanismos**, um de cada vez, com o teste determinístico junto.
 3. **Instrumente** as três métricas e as duas marcações de trace, e confirme no Prometheus e no Jaeger
@@ -258,7 +258,7 @@ flowchart LR
 ### As oito seções
 
 O que cada uma precisa conter, com os contra-exemplos que costumam aparecer no lugar do conteúdo, está
-em **[`docs/guia-sad.md`](docs/guia-sad.md)**. Leia antes de escrever. Em resumo:
+em **[`docs/guia-sad.md`](guia-sad.md)**. Leia antes de escrever. Em resumo:
 
 1. **Introdução:** propósito, escopo, restrições separadas das decisões, e pressupostos com valor,
    origem e consequência se forem falsos.
@@ -626,7 +626,7 @@ A instabilidade **não é sorteada a cada execução**. Ela vem da semente `2026
 falhas da `partner-flaky` é a mesma na sua máquina e em qualquer outra, inclusive a rajada de **nove
 falhas consecutivas nas sequências 49 a 57**, que é o que garante que um circuit breaker de fato abre.
 Isso não é estimativa: está medido em
-[`docs/smoke-test-factibilidade.md`](docs/smoke-test-factibilidade.md) e preso por teste em
+[`docs/smoke-test-factibilidade.md`](smoke-test-factibilidade.md) e preso por teste em
 `cmd/partner-mock/feasibility_test.go`.
 
 Toda resposta das parceiras traz os cabeçalhos `X-Partner-Name`, `X-Partner-Seq`, `X-Partner-Latency-Ms`
