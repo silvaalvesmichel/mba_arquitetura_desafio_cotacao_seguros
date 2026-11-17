@@ -1,0 +1,5 @@
+Trace com 502 do antes: a sequencia morre na parceira que falhou.
+traceID 3ba7bd4c8cb62ff6dd4f7d5d8797f8c6 | 3 spans
+  +     0.0 ms    1847.1 ms  POST /quotes  error=true http.response.status_code=502 server.address=quotation-api span.kind=server
+  +     0.1 ms    1657.3 ms  HTTP POST  http.response.status_code=200 server.address=partner-slow span.kind=client url.full=http://partner-slow:8080/quotes
+  +  1657.4 ms     189.7 ms  HTTP POST  error=true error.type=503 http.response.status_code=503 server.address=partner-flaky span.kind=client url.full=http://partner-flaky:8080/quotes

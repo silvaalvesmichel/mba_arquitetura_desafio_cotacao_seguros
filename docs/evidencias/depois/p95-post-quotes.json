@@ -1,0 +1,29 @@
+{
+ "query": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket[1m])))",
+ "start": 1794871123,
+ "end": 1794871277,
+ "step": 5,
+ "result": [
+  {
+   "metric": {},
+   "values": [
+    [
+     1794871258,
+     "NaN"
+    ],
+    [
+     1794871263,
+     "0.24249999999999997"
+    ],
+    [
+     1794871268,
+     "0.2425"
+    ],
+    [
+     1794871273,
+     "0.2425"
+    ]
+   ]
+  }
+ ]
+}

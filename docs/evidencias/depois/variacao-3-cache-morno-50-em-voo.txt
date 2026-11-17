@@ -1,0 +1,14 @@
+load: 200 requests, 50 at a time...
+
+loadgen · http://localhost:8080/quotes · tenant corretora-b · 200 distinct quotes
+
+load — 200 requests, 50 in flight, 23:25:59 UTC to 23:25:59 UTC
+  success        200 of 200 (100%)
+  latency        p50 10ms   p95 21ms   p99 28ms   max 34ms
+  throughput     3757.7 req/s in 53ms
+
+where to look
+  Jaeger         http://localhost:16686 · service quotation-api · operation POST /quotes
+  load window    23:25:59 UTC to 23:25:59 UTC (sort by longest first)
+  step by step   docs/roteiro-cenario-de-falha.md
+

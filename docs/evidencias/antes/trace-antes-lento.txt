@@ -1,0 +1,6 @@
+Trace mais longo do antes: tres chamadas em serie, uma colada na outra.
+traceID acdeacfb2d5cc4c1cdb14cfc80d0a458 | 4 spans
+  +     0.0 ms    8048.9 ms  POST /quotes  http.response.status_code=200 server.address=quotation-api span.kind=server
+  +     0.0 ms    1699.8 ms  HTTP POST  http.response.status_code=200 server.address=partner-slow span.kind=client url.full=http://partner-slow:8080/quotes
+  +  1699.9 ms     200.5 ms  HTTP POST  http.response.status_code=200 server.address=partner-flaky span.kind=client url.full=http://partner-flaky:8080/quotes
+  +  1900.4 ms    6148.5 ms  HTTP POST  http.response.status_code=200 server.address=partner-degrading span.kind=client url.full=http://partner-degrading:8080/quotes

@@ -1,0 +1,269 @@
+{
+ "query": "quotation_breaker_state",
+ "start": 1794871537,
+ "end": 1794871623,
+ "step": 5,
+ "result": [
+  {
+   "metric": {
+    "__name__": "quotation_breaker_state",
+    "exported_job": "quotation-api",
+    "instance": "otel-collector:8889",
+    "job": "quotation-api",
+    "partner": "partner-degrading",
+    "service_name": "quotation-api",
+    "telemetry_sdk_language": "go",
+    "telemetry_sdk_name": "opentelemetry",
+    "telemetry_sdk_version": "1.44.0"
+   },
+   "values": [
+    [
+     1794871537,
+     "0"
+    ],
+    [
+     1794871542,
+     "0"
+    ],
+    [
+     1794871547,
+     "0"
+    ],
+    [
+     1794871552,
+     "0"
+    ],
+    [
+     1794871557,
+     "0"
+    ],
+    [
+     1794871562,
+     "2"
+    ],
+    [
+     1794871567,
+     "2"
+    ],
+    [
+     1794871572,
+     "1"
+    ],
+    [
+     1794871577,
+     "1"
+    ],
+    [
+     1794871582,
+     "1"
+    ],
+    [
+     1794871587,
+     "1"
+    ],
+    [
+     1794871592,
+     "1"
+    ],
+    [
+     1794871597,
+     "1"
+    ],
+    [
+     1794871602,
+     "0"
+    ],
+    [
+     1794871607,
+     "0"
+    ],
+    [
+     1794871612,
+     "0"
+    ],
+    [
+     1794871617,
+     "0"
+    ],
+    [
+     1794871622,
+     "0"
+    ]
+   ]
+  },
+  {
+   "metric": {
+    "__name__": "quotation_breaker_state",
+    "exported_job": "quotation-api",
+    "instance": "otel-collector:8889",
+    "job": "quotation-api",
+    "partner": "partner-flaky",
+    "service_name": "quotation-api",
+    "telemetry_sdk_language": "go",
+    "telemetry_sdk_name": "opentelemetry",
+    "telemetry_sdk_version": "1.44.0"
+   },
+   "values": [
+    [
+     1794871537,
+     "0"
+    ],
+    [
+     1794871542,
+     "0"
+    ],
+    [
+     1794871547,
+     "0"
+    ],
+    [
+     1794871552,
+     "0"
+    ],
+    [
+     1794871557,
+     "0"
+    ],
+    [
+     1794871562,
+     "2"
+    ],
+    [
+     1794871567,
+     "2"
+    ],
+    [
+     1794871572,
+     "1"
+    ],
+    [
+     1794871577,
+     "1"
+    ],
+    [
+     1794871582,
+     "1"
+    ],
+    [
+     1794871587,
+     "1"
+    ],
+    [
+     1794871592,
+     "1"
+    ],
+    [
+     1794871597,
+     "1"
+    ],
+    [
+     1794871602,
+     "2"
+    ],
+    [
+     1794871607,
+     "2"
+    ],
+    [
+     1794871612,
+     "1"
+    ],
+    [
+     1794871617,
+     "1"
+    ],
+    [
+     1794871622,
+     "1"
+    ]
+   ]
+  },
+  {
+   "metric": {
+    "__name__": "quotation_breaker_state",
+    "exported_job": "quotation-api",
+    "instance": "otel-collector:8889",
+    "job": "quotation-api",
+    "partner": "partner-slow",
+    "service_name": "quotation-api",
+    "telemetry_sdk_language": "go",
+    "telemetry_sdk_name": "opentelemetry",
+    "telemetry_sdk_version": "1.44.0"
+   },
+   "values": [
+    [
+     1794871537,
+     "0"
+    ],
+    [
+     1794871542,
+     "0"
+    ],
+    [
+     1794871547,
+     "0"
+    ],
+    [
+     1794871552,
+     "0"
+    ],
+    [
+     1794871557,
+     "0"
+    ],
+    [
+     1794871562,
+     "0"
+    ],
+    [
+     1794871567,
+     "0"
+    ],
+    [
+     1794871572,
+     "0"
+    ],
+    [
+     1794871577,
+     "0"
+    ],
+    [
+     1794871582,
+     "0"
+    ],
+    [
+     1794871587,
+     "0"
+    ],
+    [
+     1794871592,
+     "0"
+    ],
+    [
+     1794871597,
+     "0"
+    ],
+    [
+     1794871602,
+     "0"
+    ],
+    [
+     1794871607,
+     "0"
+    ],
+    [
+     1794871612,
+     "0"
+    ],
+    [
+     1794871617,
+     "0"
+    ],
+    [
+     1794871622,
+     "0"
+    ]
+   ]
+  }
+ ]
+}

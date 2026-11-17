@@ -1,0 +1,10 @@
+2026/11/16 23:25:44 quotation-api: OpenTelemetry on | service="quotation-api" collector=http://otel-collector:4317
+2026/11/16 23:25:44 quotation-api listening on :8080 | partners=3 brokers=[corretora-a corretora-b]
+2026/11/16 23:25:44 quotation-api: partner timeout=2s | breaker opens after 5 consecutive failures, stays open 10s | cache ttl=5m0s redis=redis:6379
+2026/11/16 23:25:53 quotation-api: breaker of partner-flaky went from closed to open
+2026/11/16 23:25:53 quotation-api: breaker of partner-degrading went from closed to open
+2026/11/16 23:26:04 quotation-api: breaker of partner-flaky went from open to half_open
+2026/11/16 23:26:04 quotation-api: breaker of partner-degrading went from open to half_open
+2026/11/16 23:26:33 quotation-api: breaker of partner-flaky went from half_open to open
+2026/11/16 23:26:33 quotation-api: breaker of partner-degrading went from half_open to closed
+2026/11/16 23:26:44 quotation-api: breaker of partner-flaky went from open to half_open

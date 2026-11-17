@@ -1,0 +1,141 @@
+# Mede as evidencias do desafio num runner do GitHub, porque a maquina de desenvolvimento nao tem
+# Docker. Dispara em push para verify/antes (codigo original) e verify/depois (entrega) e grava os
+# artefatos em docs/evidencias/<fase>/ na propria branch. Nao faz parte do enunciado.
+name: evidencias
+
+on:
+  push:
+    branches: ["verify/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BUILDKIT_PROGRESS: plain
+      COMPOSE_ANSI: never
+      COMPOSE_PROGRESS: plain
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Fase e pasta de saida
+        run: |
+          FASE="${GITHUB_REF_NAME#verify/}"
+          echo "FASE=$FASE" >> "$GITHUB_ENV"
+          echo "OUT=docs/evidencias/$FASE" >> "$GITHUB_ENV"
+          rm -rf "docs/evidencias/$FASE"
+          mkdir -p "docs/evidencias/$FASE"
+          sudo apt-get update -qq && sudo apt-get install -y -qq librsvg2-bin fonts-dejavu-core > /dev/null
+
+      - name: Ambiente
+        run: |
+          {
+            echo "commit medido: $(git rev-parse HEAD) (branch $GITHUB_REF_NAME)"
+            echo "data (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "runner: $(uname -srm), $(nproc) vCPU, $(free -g | awk '/Mem:/ {print $2}') GiB"
+            echo "$(go version)"
+            echo "$(docker --version)"
+            echo "$(docker compose version)"
+            echo "$(make --version | head -1)"
+          } | tee "$OUT/ambiente.txt"
+
+      - name: make test
+        run: |
+          set -o pipefail
+          make test 2>&1 | tee "$OUT/make-test.txt"
+
+      - name: go test -race (fora do Makefile, so para a concorrencia do breaker)
+        run: |
+          set -o pipefail
+          go test -race -count=1 ./... 2>&1 | tee "$OUT/go-test-race.txt"
+
+      - name: make smoke
+        run: |
+          set -o pipefail
+          make smoke 2>&1 | tee "$OUT/make-smoke.txt"
+
+      - name: make down && make reproduce (carga padrao)
+        run: |
+          set -o pipefail
+          echo "SINCE=$(date +%s)" >> "$GITHUB_ENV"
+          (make down && make reproduce) 2>&1 | tee "$OUT/make-reproduce.txt"
+
+      - name: Graficos e traces da carga padrao
+        run: |
+          sleep 30
+          if [ "$FASE" = "antes" ]; then
+            node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" p95-post-quotes p95-por-parceira-http traces-antes metric-names
+          else
+            node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" p95-post-quotes cache-hit-rate
+          fi
+
+      - name: Variacao 1, cache frio em serie (breaker da partner-flaky)
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          echo "SINCE_V1=$(date +%s)" >> "$GITHUB_ENV"
+          make load ARGS="-baseline 0 -requests 120 -concurrency 1 -distinct 120 -duration 10m" 2>&1 | tee "$OUT/variacao-1-cache-frio-em-serie.txt"
+
+      - name: Graficos da variacao 1
+        if: env.FASE != 'antes'
+        run: |
+          sleep 30
+          node .github/scripts/collect-evidence.mjs "$OUT/variacao-1" "$SINCE_V1" breaker-estado breaker-transicoes
+
+      - name: Variacao 2, cache frio com 50 em voo (timeout e breaker da partner-degrading)
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          echo "SINCE_V2=$(date +%s)" >> "$GITHUB_ENV"
+          make load ARGS="-tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m" 2>&1 | tee "$OUT/variacao-2-cache-frio-50-em-voo.txt"
+
+      # Roda do host (go run), como o roteiro permite, para nao recriar a API: o make load recria os
+      # conteineres da API e das parceiras a cada execucao e zeraria os breakers e os contadores.
+      - name: Variacao 3, a mesma carga da variacao 2 de novo, com o cache morno
+        if: env.FASE != 'antes'
+        run: |
+          set -o pipefail
+          go run ./cmd/loadgen -tenant corretora-b -baseline 0 -requests 200 -concurrency 50 -distinct 200 -duration 10m 2>&1 | tee "$OUT/variacao-3-cache-morno-50-em-voo.txt"
+
+      # Um risco novo logo depois da carga, com os circuitos ainda abertos, e de novo 30 s depois: a
+      # segunda chamada e a sonda que fecha o circuito. Dados ficticios.
+      - name: Resposta degradada e sonda que fecha o circuito
+        if: env.FASE != 'antes'
+        run: |
+          cotar() {
+            curl -s -m 10 localhost:8080/quotes -H 'Content-Type: application/json' -H 'X-Tenant-Id: corretora-b'               -d "{\"driver\":{\"document\":\"00000000191\",\"birth_year\":1985},\"vehicle\":{\"plate\":\"$1\",\"model\":\"Onix 1.0\",\"year\":2020,\"value_cents\":7500000},\"coverage\":\"comprehensive\"}"
+          }
+          cotar SND0001 | tee "$OUT/resposta-degradada.json"; echo
+          sleep 30
+          cotar SND0002 | tee "$OUT/resposta-apos-sonda.json"; echo
+
+      - name: Graficos das variacoes 2 e 3 e traces
+        if: env.FASE != 'antes'
+        run: |
+          sleep 30
+          node .github/scripts/collect-evidence.mjs "$OUT/variacao-2-e-3" "$SINCE_V2" breaker-estado breaker-transicoes latencia-por-parceira p95-post-quotes
+          node .github/scripts/collect-evidence.mjs "$OUT" "$SINCE" traces-depois metric-names
+          docker compose logs quotation-api --no-log-prefix 2>&1 | tail -n 200 > "$OUT/log-quotation-api.txt"
+
+      - name: SVG para PNG
+        run: |
+          find "$OUT" -name '*.svg' | while read -r svg; do
+            rsvg-convert -b white -o "${svg%.svg}.png" "$svg" && rm "$svg"
+          done
+          ls -laR "$OUT"
+
+      - name: Grava as evidencias na branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/evidencias
+          git commit -m "evidencias: fase $FASE medida no runner" || echo "nada para gravar"
+          git push
