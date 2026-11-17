@@ -4,14 +4,37 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
-	Port      string
-	Partners  []Partner
-	Tenants   []string
-	Telemetry Telemetry
+	Port       string
+	Partners   []Partner
+	Tenants    []string
+	Telemetry  Telemetry
+	Resilience Resilience
+	Cache      Cache
+}
+
+// Resilience holds the parameters of the partner boundary. Every default is defended in docs/sad.md,
+// section 4.
+type Resilience struct {
+	// PartnerTimeout caps the wait for one partner. A timeout counts as a failure for the breaker.
+	PartnerTimeout time.Duration
+	// BreakerFailureThreshold is the number of consecutive failures that opens a partner's circuit.
+	BreakerFailureThreshold int
+	// BreakerOpenFor is how long the circuit stays open before a single probe is let through.
+	BreakerOpenFor time.Duration
+}
+
+type Cache struct {
+	RedisAddr string
+	// TTL of a cached quote. Never above the 24 hours insurers honor a quoted premium for.
+	TTL time.Duration
+	// Timeout of one Redis command. Past it the lookup counts as a miss.
+	Timeout time.Duration
 }
 
 type Partner struct {
@@ -35,6 +58,18 @@ const defaultCollector = "http://localhost:4317"
 
 const defaultServiceName = "quotation-api"
 
+const (
+	defaultPartnerTimeoutMs        = 2000
+	defaultBreakerFailureThreshold = 5
+	defaultBreakerOpenSeconds      = 10
+	defaultRedisAddr               = "localhost:6379"
+	defaultCacheTTLSeconds         = 300
+	defaultCacheTimeoutMs          = 100
+)
+
+// MaxCacheTTLSeconds is the commercial ceiling of 24 hours.
+const MaxCacheTTLSeconds = 24 * 60 * 60
+
 func LoadConfig(env func(string) string) (Config, error) {
 	cfg := Config{Port: text(env, "PORT", "8080")}
 
@@ -48,7 +83,64 @@ func LoadConfig(env func(string) string) (Config, error) {
 	if cfg.Telemetry, err = parseTelemetry(env); err != nil {
 		return Config{}, err
 	}
+	if cfg.Resilience, err = parseResilience(env); err != nil {
+		return Config{}, err
+	}
+	if cfg.Cache, err = parseCache(env); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+func parseResilience(env func(string) string) (Resilience, error) {
+	timeoutMs, err := positive(env, "PARTNER_TIMEOUT_MS", defaultPartnerTimeoutMs)
+	if err != nil {
+		return Resilience{}, err
+	}
+	threshold, err := positive(env, "BREAKER_FAILURE_THRESHOLD", defaultBreakerFailureThreshold)
+	if err != nil {
+		return Resilience{}, err
+	}
+	openSeconds, err := positive(env, "BREAKER_OPEN_SECONDS", defaultBreakerOpenSeconds)
+	if err != nil {
+		return Resilience{}, err
+	}
+	return Resilience{
+		PartnerTimeout:          time.Duration(timeoutMs) * time.Millisecond,
+		BreakerFailureThreshold: threshold,
+		BreakerOpenFor:          time.Duration(openSeconds) * time.Second,
+	}, nil
+}
+
+func parseCache(env func(string) string) (Cache, error) {
+	ttlSeconds, err := positive(env, "CACHE_TTL_SECONDS", defaultCacheTTLSeconds)
+	if err != nil {
+		return Cache{}, err
+	}
+	if ttlSeconds > MaxCacheTTLSeconds {
+		return Cache{}, fmt.Errorf("CACHE_TTL_SECONDS: %d is above the 24-hour ceiling (%d)", ttlSeconds, MaxCacheTTLSeconds)
+	}
+	timeoutMs, err := positive(env, "CACHE_TIMEOUT_MS", defaultCacheTimeoutMs)
+	if err != nil {
+		return Cache{}, err
+	}
+	return Cache{
+		RedisAddr: strings.TrimSpace(text(env, "REDIS_ADDR", defaultRedisAddr)),
+		TTL:       time.Duration(ttlSeconds) * time.Second,
+		Timeout:   time.Duration(timeoutMs) * time.Millisecond,
+	}, nil
+}
+
+func positive(env func(string) string, key string, fallback int) (int, error) {
+	raw := strings.TrimSpace(env(key))
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value <= 0 {
+		return 0, fmt.Errorf("%s: %q is not a positive integer", key, raw)
+	}
+	return value, nil
 }
 
 func parseTelemetry(env func(string) string) (Telemetry, error) {
